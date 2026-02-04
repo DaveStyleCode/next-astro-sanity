@@ -17,6 +17,43 @@ next-astro-sanity/
 
 ## Quick Start
 
+### Environment files
+
+Both projects require environment variables for Sanity CMS integration. Copy the sample files and fill in your values:
+
+**Astro:**
+
+```bash
+cd astro-demo
+cp .env-sample .env.local
+```
+
+Edit `.env.local` with your Sanity credentials:
+
+```
+PUBLIC_SANITY_PROJECT_ID=your-project-id
+PUBLIC_SANITY_DATASET=production
+PUBLIC_SANITY_VISUAL_EDITING_ENABLED=true
+SANITY_API_TOKEN=your-api-token
+```
+
+**Next.js:**
+
+```bash
+cd next-demo
+cp .env-sample .env.local
+```
+
+Edit `.env.local` with your Sanity credentials:
+
+```
+NEXT_PUBLIC_SANITY_PROJECT_ID=your-project-id
+NEXT_PUBLIC_SANITY_DATASET=production
+NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
+SANITY_API_READ_TOKEN=your-api-token
+```
+
+
 ### Astro
 
 ```bash
