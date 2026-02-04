@@ -1,0 +1,42 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { Icon } from 'astro-icon/components';
+import { COMPANY_NAME } from '../constants';
+
+const posts = await getCollection('posts');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const recentPosts = sortedPosts.slice(0, 3);
+const companyName = COMPANY_NAME;
+---
+
+<BaseLayout title="Home">
+  <!-- Hero Section -->
+  <section class=" dark:from-gray-900 dark:to-gray-950 py-16 md:py-24">
+    <div class="mx-auto max-w-5xl px-4 text-center">
+      <h1 class="text-4xl font-bold md:text-5xl lg:text-7xl">
+        {companyName}
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-secondary">
+        A modern, fast, and beautiful blog built with Astro. Exploring web development,
+        performance optimization, and the latest in frontend technology.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-4">
+        <a
+          href="/blog"
+          class="rounded-full bg-primary-800 px-6 py-3 font-medium text-white hover:bg-primary-700 transition-colors"
+        >
+          Search Listings
+        </a>
+        <!-- <a
+          href="/about"
+          class="rounded-full bg-white/10 px-6 py-3 font-medium  hover:bg-secondary transition-colors"
+        >
+          About Us
+        </a> -->
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

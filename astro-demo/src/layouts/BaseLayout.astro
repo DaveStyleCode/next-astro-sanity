@@ -1,0 +1,70 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+  preloadImage?: string;  // URL of LCP image to preload
+}
+
+const { title, description = 'A modern blog built with Astro', image, article = false, preloadImage } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Preconnect to Sanity CDN for faster image loading -->
+    <link rel="preconnect" href="https://cdn.sanity.io" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+
+    <!-- Primary Meta Tags -->
+    <title>{title} | Astro Blog</title>
+    <meta name="title" content={`${title} | Astro Blog`} />
+    <meta name="description" content={description} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {image && <meta property="og:image" content={new URL(image, Astro.site)} />}
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    {image && <meta property="twitter:image" content={new URL(image, Astro.site)} />}
+
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title="Astro Blog RSS" href="/rss.xml" />
+
+    <!-- Preload LCP image if provided -->
+    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+
+    <!-- Theme script (inline to prevent flash) -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Header />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

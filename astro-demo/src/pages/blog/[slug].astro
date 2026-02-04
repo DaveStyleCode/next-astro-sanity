@@ -1,0 +1,169 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SanityContent from '../../components/SanityContent.astro';
+import SanityPostCard from '../../components/SanityPostCard.astro';
+import { formatDate } from '../../lib/utils';
+import { getPostBySlug, getAllPostSlugs, getRelatedPosts, urlFor, hasImageAsset } from '../../lib/sanity';
+
+export const getStaticPaths = (async () => {
+  const slugs = await getAllPostSlugs();
+  return slugs.map((slug) => ({
+    params: { slug },
+  }));
+}) satisfies GetStaticPaths;
+
+const { slug } = Astro.params;
+const post = await getPostBySlug(slug);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Get related posts using optimized Sanity query
+const categoryIds = post.categories?.map((c) => c._id) || [];
+const relatedPosts = await getRelatedPosts(post._id, categoryIds);
+
+// Generate structured data for SEO
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": post.title,
+  "description": post.excerpt,
+  "image": post.mainImage && hasImageAsset(post.mainImage) 
+    ? urlFor(post.mainImage).width(1200).height(630).url() 
+    : undefined,
+  "datePublished": post.publishedAt,
+  "author": post.author ? {
+    "@type": "Person",
+    "name": post.author.name,
+  } : undefined,
+  "publisher": {
+    "@type": "Organization",
+    "name": "D.R.Horton",
+  },
+};
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.excerpt}
+  article={true}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} slot="head" />
+
+  <article class="mx-auto max-w-5xl px-4 py-12">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="mb-4 flex flex-wrap items-center gap-2 text-sm text-secondary">
+        {post.publishedAt && (
+          <time datetime={post.publishedAt}>
+            {formatDate(new Date(post.publishedAt))}
+          </time>
+        )}
+      </div>
+
+      <h1 class="text-3xl font-bold md:text-4xl lg:text-5xl">
+        {post.title}
+      </h1>
+
+      {post.excerpt && (
+        <p class="mt-4 text-lg text-secondary">
+          {post.excerpt}
+        </p>
+      )}
+
+      {post.categories && post.categories.length > 0 && (
+        <div class="mt-6 flex flex-wrap gap-2">
+          {post.categories.map((category) => (
+            <a
+              href={`/category/${category.slug.current}`}
+              class="rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary hover:bg-primary-100 hover:text-primary-700 transition-colors"
+            >
+              {category.title}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {post.author && (
+        <div class="mt-6 flex items-center gap-4">
+          {hasImageAsset(post.author.image) && (
+            <img
+              src={urlFor(post.author.image).width(48).height(48).url()}
+              alt={`Profile picture of ${post.author.name}`}
+              class="w-12 h-12 rounded-full object-cover"
+              width="48"
+              height="48"
+              loading="eager"
+            />
+          )}
+          <a href={`/author/${post.author.slug.current}`} class="flex flex-col gap-1">
+              <span class="font-medium hover:text-primary-600 transition-colors">{post.author.name}</span>
+              {post.author.bio && (
+                <span class="text-sm text-secondary line-clamp-1">{post.author.bio}</span>
+              )}
+            </a>
+        </div>
+      )}
+    </header>
+
+    <!-- Main Image -->
+    {hasImageAsset(post.mainImage) && (
+      <div class="mb-8">
+        <img
+          src={urlFor(post.mainImage).width(1200).height(630).url()}
+          alt={post.mainImage.alt || post.title}
+          class="w-full rounded-lg object-cover"
+          width="1200"
+          height="630"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    <!-- Content -->
+    {post.body && (
+      <div class="min-w-0 flex-1">
+        <SanityContent value={post.body} removeFirstHeading={true} />
+      </div>
+    )}
+
+    <!-- Author Card -->
+    {post.author && (
+      <div class="mt-12 border-t pt-8 border-white/20">
+        <h2 class="mb-4 text-lg font-semibold">Written by</h2>
+        <div class="flex items-start gap-4">
+          {hasImageAsset(post.author.image) && (
+            <img
+              src={urlFor(post.author.image).width(80).height(80).url()}
+              alt={`Profile picture of ${post.author.name}`}
+              class="w-20 h-20 rounded-full object-cover"
+              width="80"
+              height="80"
+              loading="lazy"
+            />
+          )}
+          <div>
+            <p class="font-semibold text-lg">{post.author.name}</p>
+            {post.author.bio && (
+              <p class="mt-1 text-secondary">{post.author.bio}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Related Posts -->
+    {relatedPosts.length > 0 && (
+      <div class="mt-12 border-t pt-8" style="content-visibility: auto; contain-intrinsic-size: auto 400px;">
+        <h2 class="mb-6 text-lg font-semibold">Related Posts</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+          {relatedPosts.map((relatedPost) => (
+            <SanityPostCard post={relatedPost} />
+          ))}
+        </div>
+      </div>
+    )}
+  </article>
+</BaseLayout>

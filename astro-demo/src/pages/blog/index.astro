@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SanityPostCard from '../../components/SanityPostCard.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getPosts, getCategories, getCategoriesWithPosts } from '../../lib/sanity';
+
+const POSTS_PER_PAGE = 6;
+
+// Fetch data in parallel for better performance
+const [posts, allCategories] = await Promise.all([
+  getPosts(),
+  getCategories(),
+]);
+
+// Filter to only show categories that have posts
+const categories = getCategoriesWithPosts(allCategories, posts);
+
+const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+const paginatedPosts = posts.slice(0, POSTS_PER_PAGE);
+---
+
+<BaseLayout title="Blog" description="Read all our blog posts about web development, performance, and modern frontend techniques.">
+  <div class="mx-auto max-w-5xl px-4 py-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold">Blog</h1>
+      <p class="mt-2 text-secondary">
+        Thoughts on web development, frameworks, and building for the modern web.
+      </p>
+    </div>
+
+    <!-- Categories Filter -->
+    {categories.length > 0 && (
+      <div class="mb-8">
+        <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">Browse by Category</h2>
+        <div class="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <a
+              href={`/category/${category.slug.current}`}
+              class="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-secondary hover:bg-primary-100 hover:text-primary-700 transition-colors"
+            >
+              {category.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Posts Grid -->
+    {posts.length > 0 ? (
+      <div class="grid gap-6 md:grid-cols-2">
+        {paginatedPosts.map((post) => (
+          <SanityPostCard post={post} />
+        ))}
+      </div>
+    ) : (
+      <p class="text-secondary">No posts yet. Check back soon!</p>
+    )}
+
+    {totalPages > 1 && (
+      <Pagination currentPage={1} totalPages={totalPages} baseUrl="/blog" />
+    )}
+  </div>
+</BaseLayout>

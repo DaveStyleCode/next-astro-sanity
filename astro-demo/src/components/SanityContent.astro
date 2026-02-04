@@ -1,0 +1,146 @@
+---
+import { PortableText } from 'astro-portabletext';
+import CodeBlock from './portabletext/CodeBlock.astro';
+import Image from './portabletext/Image.astro';
+import MarkdownTable from './portabletext/MarkdownTable.astro';
+
+interface Props {
+  value: any[];
+  removeFirstHeading?: boolean;
+}
+
+const { value, removeFirstHeading = false } = Astro.props;
+
+// Process blocks to detect and convert markdown-style tables and code blocks
+// Optimized for performance with early returns and reduced iterations
+function processBlocks(blocks: any[], skipFirstHeading: boolean = false): any[] {
+  // Early return if no blocks
+  if (!blocks || blocks.length === 0) return [];
+  
+  const result: any[] = [];
+  let tableRows: string[] = [];
+  let codeLines: string[] = [];
+  let codeLanguage = '';
+  let inCodeBlock = false;
+  let firstHeadingSkipped = !skipFirstHeading; // If not skipping, mark as done
+
+  const blocksLength = blocks.length;
+  for (let i = 0; i < blocksLength; i++) {
+    const block = blocks[i];
+    
+    // Skip first heading if requested
+    if (!firstHeadingSkipped && block._type === 'block') {
+      const style = block.style;
+      if (style === 'h1' || style === 'h2' || style === 'h3') {
+        firstHeadingSkipped = true;
+        continue;
+      }
+    }
+
+    // Only process normal blocks for special handling
+    if (block._type === 'block' && block.style === 'normal' && !block.listItem) {
+      const children = block.children;
+      if (!children || children.length === 0) {
+        result.push(block);
+        continue;
+      }
+
+      // Optimize text concatenation
+      let text = '';
+      for (let j = 0; j < children.length; j++) {
+        const child = children[j];
+        if (child.text) text += child.text;
+      }
+      
+      // Early checks with minimal string operations
+      const firstChar = text[0];
+      const lastChar = text[text.length - 1];
+
+      // Check for fenced code block start/end
+      if (firstChar === '`' && text.startsWith('```')) {
+        if (!inCodeBlock) {
+          // Starting a code block
+          inCodeBlock = true;
+          codeLanguage = text.slice(3).trim();
+          continue;
+        } else {
+          // Ending a code block
+          inCodeBlock = false;
+          result.push({
+            _type: 'code',
+            _key: `code-${result.length}`,
+            code: codeLines.join('\n'),
+            language: codeLanguage
+          });
+          codeLines = [];
+          codeLanguage = '';
+          continue;
+        }
+      }
+
+      // If inside code block, accumulate lines
+      if (inCodeBlock) {
+        codeLines.push(text);
+        continue;
+      }
+
+      // Check if this looks like a markdown table row (optimized check)
+      if (firstChar === '|' && lastChar === '|') {
+        tableRows.push(text);
+        continue;
+      }
+    }
+
+    // If we have accumulated table rows and hit a non-table block, flush the table
+    if (tableRows.length > 0) {
+      result.push({
+        _type: 'markdownTable',
+        _key: `table-${result.length}`,
+        rows: tableRows
+      });
+      tableRows = [];
+    }
+
+    result.push(block);
+  }
+
+  // Flush any remaining table rows
+  if (tableRows.length > 0) {
+    result.push({
+      _type: 'markdownTable',
+      _key: `table-${result.length}`,
+      rows: tableRows
+    });
+  }
+
+  // Flush any remaining code block (unclosed)
+  if (codeLines.length > 0) {
+    result.push({
+      _type: 'code',
+      _key: `code-${result.length}`,
+      code: codeLines.join('\n'),
+      language: codeLanguage
+    });
+  }
+
+  return result;
+}
+
+const processedValue = processBlocks(value, removeFirstHeading);
+---
+
+<div class="prose prose-lg max-w-none" style="content-visibility: auto;">
+  <PortableText
+    value={processedValue}
+    components={{
+      type: {
+        code: CodeBlock,
+        image: Image,
+        markdownTable: MarkdownTable,
+      }
+    }}
+    onMissingComponent={import.meta.env.DEV ? ((message, context) => {
+      console.warn('[PortableText]', message, context);
+    }) : false}
+  />
+</div>

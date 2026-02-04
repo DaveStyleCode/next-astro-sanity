@@ -1,0 +1,74 @@
+---
+import GitHubIcon from '../../public/github.svg';
+import RssIcon from '../../public/rss.svg';
+import { getStates } from '../lib/sanity';
+
+const currentYear = new Date().getFullYear();
+const companyName = 'D.R. Horton';
+
+const states = await getStates();
+
+// Helper to create URL-friendly slug from state name
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-');
+}
+
+// Helper to title case
+function toTitleCase(str: string): string {
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+---
+
+<footer class="border-t border-white/10">
+  <div class="mx-auto max-w-6xl px-4 py-12">
+    <!-- States Section -->
+    {states.length > 0 && (
+      <div class="mb-10">
+        <h2 class="mb-6 text-xl font-bold">
+          Starting your search? Find your new D.R. Horton home in these areas.
+        </h2>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {states.map((state) => (
+            <a
+              href={`/states/${toSlug(state.name)}`}
+              class="text-sm text-secondary hover:text-primary-400 transition-colors py-1"
+            >
+              {toTitleCase(state.name)}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Bottom Bar -->
+    <div class="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 md:flex-row">
+      <div class="text-center md:text-left">
+        <p class="text-sm text-secondary">
+          &copy; {currentYear} {companyName} - All Rights Reserved.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <a
+          href="/rss.xml"
+          class="text-secondary hover:text-primary-600"
+          aria-label="RSS Feed"
+        >
+          <RssIcon class="h-5 w-5" />
+        </a>
+        <a
+          href="https://github.com"
+          class="text-secondary hover:text-primary-600"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+        >
+          <GitHubIcon class="h-5 w-5" />
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>

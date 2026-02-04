@@ -1,0 +1,93 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SanityPostCard from '../../components/SanityPostCard.astro';
+import { getCategories, getPosts, type SanityCategory, type SanityPost } from '../../lib/sanity';
+
+export const getStaticPaths = (async () => {
+  const categories = await getCategories();
+  const posts = await getPosts();
+
+  // Calculate which categories have posts (for navigation display)
+  const categoriesWithPosts = categories.filter((category) =>
+    posts.some((post) =>
+      post.categories?.some((cat) => cat.slug.current === category.slug.current)
+    )
+  );
+
+  // Generate pages for ALL categories (even empty ones to avoid 404s)
+  return categories.map((category) => ({
+    params: { category: category.slug.current },
+    props: {
+      category,
+      posts: posts.filter((post) => 
+        post.categories?.some((cat) => cat.slug.current === category.slug.current)
+      ).sort((a, b) => {
+        const dateA = a.publishedAt ? new Date(a.publishedAt).valueOf() : 0;
+        const dateB = b.publishedAt ? new Date(b.publishedAt).valueOf() : 0;
+        return dateB - dateA;
+      }),
+      categoriesWithPosts,
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  category: SanityCategory;
+  posts: SanityPost[];
+  categoriesWithPosts: SanityCategory[];
+}
+
+const { category, posts, categoriesWithPosts } = Astro.props;
+---
+
+<BaseLayout title={category.title} description={category.description || `All blog posts in ${category.title}`}>
+  <div class="mx-auto max-w-5xl px-4 py-12">
+    <div class="mb-8">
+      <a href="/blog" class="text-primary-600 hover:underline">
+        ← Back to all posts
+      </a>
+      <h1 class="mt-4 text-3xl font-bold ">
+        <span class="text-primary-600">{category.title}</span>
+      </h1>
+      {category.description && (
+        <p class="mt-2 text-secondary text-lg">
+          {category.description}
+        </p>
+      )}
+      <p class="mt-2 text-secondary">
+        {posts.length} {posts.length === 1 ? 'post' : 'posts'} found
+      </p>
+    </div>
+
+    <!-- Other Categories -->
+    {categoriesWithPosts.length > 1 && (
+      <div class="mb-8">
+        <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">Other Categories</h2>
+        <div class="flex flex-wrap gap-2">
+          {categoriesWithPosts
+            .filter((cat) => cat._id !== category._id)
+            .map((cat) => (
+              <a
+                href={`/category/${cat.slug.current}`}
+                class="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-secondary hover:bg-primary-100 hover:text-primary-700 transition-colors"
+              >
+                {cat.title}
+              </a>
+            ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Posts Grid -->
+    {posts.length > 0 ? (
+      <div class="grid gap-6 md:grid-cols-2">
+        {posts.map((post) => (
+          <SanityPostCard post={post} />
+        ))}
+      </div>
+    ) : (
+      <p class="text-secondary">No posts in this category yet.</p>
+    )}
+  </div>
+</BaseLayout>

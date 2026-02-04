@@ -1,0 +1,52 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { CommunityGrid } from '../../components/CommunityGrid';
+import { getStateWithCommunities, getAllStateNames } from '../../lib/sanity';
+
+// Pre-render all state pages at build time for faster load times
+export const prerender = true;
+
+// Generate static paths for all states
+export const getStaticPaths = (async () => {
+  const stateNames = await getAllStateNames();
+  return stateNames.map((name) => ({
+    params: { state: name.toLowerCase().replace(/\s+/g, '-') },
+    props: { stateName: name },
+  }));
+}) satisfies GetStaticPaths;
+
+// Get the state name from props (passed from getStaticPaths)
+const { stateName } = Astro.props;
+
+// Single query fetches both state and communities - eliminates waterfall for better LCP
+const { state: stateData, communities } = await getStateWithCommunities(stateName);
+
+if (!stateData) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout 
+  title={`Communities in ${stateData.name}`} 
+  description={`Browse ${communities.length} communities in ${stateData.name}`}
+  preloadImage={communities[0]?.imageLink}
+>
+  <div class="mx-auto max-w-6xl px-4 py-12">
+    <header class="mb-8">
+      <nav class="mb-4 text-sm text-secondary">
+        <a href="/states" class="hover:text-primary-400 transition-colors">States</a>
+        <span class="mx-2">/</span>
+        <span>{stateData.name}</span>
+      </nav>
+      <h1 class="text-3xl font-bold md:text-4xl capitalize">
+        Communities in {stateData.name}
+      </h1>
+      <p class="mt-2 text-secondary">
+        {communities.length} communities available
+      </p>
+    </header>
+
+    <CommunityGrid communities={communities} itemsPerPage={9} client:load />
+  </div>
+</BaseLayout>

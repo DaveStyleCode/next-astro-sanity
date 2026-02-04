@@ -1,0 +1,76 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getUniqueTagsFromPosts } from '../../lib/utils';
+
+export const getStaticPaths = (async () => {
+  const posts = await getCollection('posts');
+  const tags = getUniqueTagsFromPosts(posts);
+
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: posts
+        .filter((post) => post.data.tags.includes(tag))
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+      allTags: tags,
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  tag: string;
+  posts: Awaited<ReturnType<typeof getCollection<'posts'>>>;
+  allTags: string[];
+}
+
+const { tag, posts, allTags } = Astro.props;
+---
+
+<BaseLayout title={`Posts tagged "${tag}"`} description={`All blog posts tagged with ${tag}`}>
+  <div class="mx-auto max-w-5xl px-4 py-12">
+    <div class="mb-8">
+      <a href="/blog" class="text-primary-600 hover:underline">
+        ← Back to all posts
+      </a>
+      <h1 class="mt-4 text-3xl font-bold ">
+        Posts tagged "<span class="text-primary-600">{tag}</span>"
+      </h1>
+      <p class="mt-2 text-secondary">
+        {posts.length} {posts.length === 1 ? 'post' : 'posts'} found
+      </p>
+    </div>
+
+    <!-- Other Tags -->
+    <div class="mb-8">
+      <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">Other Tags</h2>
+      <div class="flex flex-wrap gap-2">
+        {allTags.filter((t) => t !== tag).map((t) => (
+          <a
+            href={`/tag/${t}`}
+            class="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-secondary hover:bg-primary-100 hover:text-primary-700 transition-colors"
+          >
+            {t}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="grid gap-6 md:grid-cols-2">
+      {posts.map((post) => (
+        <PostCard
+          title={post.data.title}
+          description={post.data.description}
+          pubDate={post.data.pubDate}
+          slug={post.id}
+          tags={post.data.tags}
+          body={post.body}
+        />
+      ))}
+    </div>
+  </div>
+</BaseLayout>

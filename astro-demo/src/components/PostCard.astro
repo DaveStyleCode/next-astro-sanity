@@ -1,0 +1,50 @@
+---
+import { formatDate, calculateReadingTime } from '../lib/utils';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  slug: string;
+  tags: string[];
+  body?: string;
+}
+
+const { title, description, pubDate, slug, tags, body } = Astro.props;
+const readingTime = body ? calculateReadingTime(body) : null;
+---
+
+<article class="group rounded-lg bg-white/5 p-6 transition-shadow hover:shadow-lg">
+  <a href={`/blog/${slug}`} class="block">
+    <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-secondary">
+      <time datetime={pubDate.toISOString()}>
+        {formatDate(pubDate)}
+      </time>
+      {readingTime && (
+        <>
+          <span>•</span>
+          <span>{readingTime} min read</span>
+        </>
+      )}
+    </div>
+
+    <h2 class="mb-2 text-xl font-semibold  group-hover:text-primary-600 transition-colors">
+      {title}
+    </h2>
+
+    <p class="mb-4 text-secondary line-clamp-2">
+      {description}
+    </p>
+  </a>
+
+  <div class="flex flex-wrap gap-2">
+    {tags.map((tag) => (
+      <a
+        href={`/tag/${tag}`}
+        class="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-secondary hover:bg-primary-100 hover:text-primary-700 transition-colors"
+      >
+        {tag}
+      </a>
+    ))}
+  </div>
+</article>

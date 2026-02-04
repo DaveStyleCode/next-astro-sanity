@@ -1,0 +1,45 @@
+---
+import type { Props as PortableTextProps } from 'astro-portabletext/types';
+
+type Props = PortableTextProps<{
+  _type: string;
+  rows?: string[];
+}>;
+
+const { node } = Astro.props;
+const rows = node.rows || [];
+
+if (rows.length < 2) {
+  return;
+}
+
+// Parse header row
+const headerCells = rows[0].split('|').filter(cell => cell.trim() !== '').map(cell => cell.trim());
+
+// Skip separator row (index 1), parse data rows, filter out empty rows
+const dataRows = rows.slice(2)
+  .filter(row => row.trim() !== '' && !row.match(/^\|[-\s|]+\|$/)) // Skip empty and separator rows
+  .map(row => row.split('|').filter(cell => cell.trim() !== '').map(cell => cell.trim()))
+  .filter(row => row.length > 0); // Remove rows with no cells
+---
+
+<div class="overflow-x-auto my-6">
+  <table class="min-w-full border-collapse text-gray-900 dark:text-white">
+    <thead>
+      <tr class="bg-gray-100 dark:bg-gray-800">
+        {headerCells.map(cell => (
+          <th class="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{cell}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {dataRows.map(row => (
+        <tr class="bg-white dark:bg-gray-800 even:bg-gray-50 even:dark:bg-gray-900">
+          {row.map(cell => (
+            <td class="px-4 py-2 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">{cell}</td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,31 @@
+---
+import type { Props as PortableTextProps } from 'astro-portabletext/types';
+import { urlFor, hasImageAsset } from '../../lib/sanity';
+
+type Props = PortableTextProps<{
+  _type: 'image';
+  asset?: unknown;
+  alt?: string;
+  caption?: string;
+}>;
+
+const { node } = Astro.props;
+const hasAsset = hasImageAsset(node);
+const src = hasAsset ? urlFor(node).width(800).url() : '';
+---
+
+{hasAsset && (
+  <figure class="my-8">
+    <img 
+      src={src} 
+      alt={node.alt || ''} 
+      class="rounded-lg w-full" 
+      loading="lazy" 
+      decoding="async"
+      width="800"
+    />
+    {node.caption && (
+      <figcaption class="text-center text-sm text-secondary mt-2">{node.caption}</figcaption>
+    )}
+  </figure>
+)}

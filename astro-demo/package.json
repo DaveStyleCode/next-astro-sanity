@@ -1,0 +1,80 @@
+{
+  "name": "astro-demo",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "scrape:communities": "node scripts/scrape-and-save.js",
+    "scrape:areas": "node scripts/scrape-area-info.js",
+    "scrape:floor-plans": "node scripts/scrape-floor-plans.js",
+    "scrape:houses": "node scripts/scrape-houses.js",
+    "scrape:all": "node scripts/scrape-all.js",
+    "cleanup:areas": "node scripts/cleanup-area-info.js",
+    "link:communities": "node scripts/link-communities-to-areas.js",
+    "link:houses": "node scripts/link-houses-to-communities.js",
+    "link:floor-plans": "node scripts/link-floor-plans-to-communities.js"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/node": "^9.5.2",
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/rss": "^4.0.15",
+    "@astrojs/sitemap": "^3.7.0",
+    "@iconify-json/lucide": "^1.2.87",
+    "@sanity/astro": "^3.2.11",
+    "@sanity/client": "^7.14.1",
+    "@sanity/icons": "^3.7.4",
+    "@sanity/image-url": "^2.0.3",
+    "@sanity/ui": "^3.1.11",
+    "@sanity/vision": "^5.7.0",
+    "@sanity/visual-editing": "^5.1.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^5.16.15",
+    "astro-icon": "^1.1.5",
+    "astro-page-insight": "^0.10.2",
+    "astro-portabletext": "^0.13.0",
+    "cheerio": "^1.2.0",
+    "contentful-management": "^11.68.0",
+    "dotenv": "^17.2.3",
+    "lodash-es": "^4.17.23",
+    "lucide-react": "^0.563.0",
+    "node-fetch": "^3.3.2",
+    "react": "^19.2.3",
+    "react-compiler-runtime": "^1.0.0",
+    "react-dom": "^19.2.3",
+    "react-flagkit": "^2.0.4",
+    "react-is": "^19.2.3",
+    "sanity": "^5.7.0",
+    "sanity-plugin-iframe-pane": "^5.0.3",
+    "shiki": "^3.21.0",
+    "styled-components": "^6.3.8",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/lodash-es": "^4.17.12",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "puppeteer": "^24.36.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "puppeteer",
+      "sharp"
+    ],
+    "overrides": {
+      "react": "^19.2.3",
+      "react-dom": "^19.2.3",
+      "react-is": "^19.2.3"
+    }
+  }
+}

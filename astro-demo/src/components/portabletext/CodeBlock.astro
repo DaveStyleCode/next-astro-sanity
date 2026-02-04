@@ -1,0 +1,17 @@
+---
+import { codeToHtml } from 'shiki';
+
+const { node } = Astro.props;
+const code = node?.code || '';
+const language = node?.language || 'text';
+
+// Generate syntax-highlighted HTML
+const html = await codeToHtml(code, {
+  lang: language,
+  theme: 'github-dark',
+});
+---
+
+<div class="overflow-x-auto my-6 [&_pre]:bg-transparent! [&_pre]:p-0! [&_pre]:m-0! [&_code]:block [&_code]:leading-relaxed">
+  <div class="bg-gray-900 border border-gray-700 rounded-lg p-6 shadow-lg" set:html={html} />
+</div>

@@ -1,0 +1,45 @@
+{
+  "name": "horton",
+  "private": true,
+  "version": "1.0.0",
+  "main": "package.json",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "sanity dev",
+    "start": "sanity start",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "deploy-graphql": "sanity graphql deploy",
+    "weaken-references": "sanity migration run weaken-references --no-dry-run",
+    "publish-drafts": "sanity migration run publish-drafts --no-dry-run"
+  },
+  "keywords": [
+    "sanity"
+  ],
+  "dependencies": {
+    "@sanity/icons": "^3.7.4",
+    "@sanity/ui": "^3.1.11",
+    "@sanity/vision": "^5.7.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "react": "^19.1",
+    "react-dom": "^19.1",
+    "sanity": "^5.7.0",
+    "sanity-plugin-iframe-pane": "^5.0.3",
+    "styled-components": "^6.1.18",
+    "tailwindcss": "^4.1.18",
+    "us-state-flags": "^1.0.7"
+  },
+  "devDependencies": {
+    "@sanity/eslint-config-studio": "^6.0.0",
+    "@types/react": "^19.1",
+    "eslint": "^9.28",
+    "prettier": "^3.5",
+    "typescript": "^5.8"
+  },
+  "prettier": {
+    "semi": false,
+    "printWidth": 100,
+    "bracketSpacing": false,
+    "singleQuote": true
+  }
+}

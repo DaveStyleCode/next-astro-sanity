@@ -1,0 +1,343 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadQuery } from '../../lib/load-query';
+import { getAllCommunityIds, type SanityCommunity, type SanityHouse } from '../../lib/sanity';
+import { createDataAttribute } from '@sanity/visual-editing';
+import { formatPrice } from '../../lib/utils';
+
+// Helper to create URL-friendly slug from state name
+// Strips Sanity stega encoding (zero-width Unicode characters used for visual editing)
+function toSlug(name: string): string {
+  // Remove zero-width characters (stega encoding) before creating slug
+  const cleaned = name.replace(/[\u200B-\u200D\u200C\uFEFF]/g, '');
+  return cleaned.toLowerCase().replace(/\s+/g, '-');
+}
+
+export const getStaticPaths = (async () => {
+  const ids = await getAllCommunityIds();
+  return ids.map((id) => ({
+    params: { id },
+  }));
+}) satisfies GetStaticPaths;
+
+const { params } = Astro;
+
+// Visual editing helper
+const env = (import.meta as unknown as { env: Record<string, string> }).env;
+const visualEditingEnabled = env.PUBLIC_SANITY_VISUAL_EDITING_ENABLED === 'true';
+
+const dataAttr = visualEditingEnabled 
+  ? createDataAttribute({
+      projectId: env.PUBLIC_SANITY_PROJECT_ID,
+      dataset: env.PUBLIC_SANITY_DATASET,
+      id: params.id,
+      type: 'community',
+    })
+  : null;
+
+// Single query fetches both community and houses - eliminates waterfall for better LCP
+const { data } = await loadQuery<{ community: SanityCommunity | null; houses: SanityHouse[] }>({
+  query: `{
+    "community": *[_type == "community" && _id == $id][0] {
+      _id,
+      name,
+      imageLink,
+      "state": stateRef->{
+        _id,
+        name
+      },
+      address,
+      brand,
+      pageLink,
+      sellingStatus,
+      availableHomes,
+      minBeds,
+      maxBeds,
+      minBaths,
+      maxBaths,
+      minCars,
+      maxCars,
+      minStories,
+      maxStories,
+      minSqft,
+      maxSqft,
+      minPrice,
+      maxPrice,
+      callForPrice,
+      amenities,
+      propertyType
+    },
+    "houses": *[_type == "house" && communityRef._ref == $id] | order(address asc) {
+      _id,
+      address,
+      imageLink,
+      price,
+      beds,
+      baths,
+      halfBaths,
+      sqft,
+      status,
+      floorPlanName,
+      "community": communityRef->{
+        _id,
+        name
+      }
+    }
+  }`,
+  params,
+});
+
+const { community, houses } = data;
+
+if (!community) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout 
+  title={community.name} 
+  description={`${community.name} - ${community.address || 'New Home Community'}`}
+  preloadImage={community.imageLink}
+>
+  <div class="mx-auto max-w-4xl px-4 py-12">
+    <header class="mb-8">
+      <nav class="mb-4 text-sm text-secondary">
+        <a href="/states" class="hover:text-primary-400 transition-colors">States</a>
+        {community.state && (
+          <>
+            <span class="mx-2">/</span>
+            <a 
+              href={`/states/${toSlug(community.state.name)}`} 
+              class="hover:text-primary-400 transition-colors capitalize"
+            >
+              {community.state.name}
+            </a>
+          </>
+        )}
+        <span class="mx-2">/</span>
+        <span>{community.name}</span>
+      </nav>
+
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold md:text-4xl">
+            {community.name}
+          </h1>
+          {community.address && (
+            <p class="mt-2 text-lg text-secondary">
+              {community.address}
+            </p>
+          )}
+        </div>
+
+        {community.sellingStatus && (
+          <span 
+            class={`rounded-full px-3 py-1 text-sm font-medium ${
+              community.sellingStatus === 'Now Selling' 
+                ? 'bg-green-500/20 text-green-600'
+                : community.sellingStatus === 'Coming Soon'
+                ? 'bg-yellow-500/20 text-yellow-700'
+                : community.sellingStatus === 'Grand Opening'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-orange-500/20 text-orange-400'
+            }`}
+          >
+            {community.sellingStatus}
+          </span>
+        )}
+      </div>
+    </header>
+
+    {community.imageLink && (
+      <div class="mb-8 overflow-hidden rounded-lg">
+        <img
+          src={community.imageLink}
+          alt={community.name}
+          class="w-full object-cover"
+          loading="eager"
+          fetchpriority="high"
+          data-sanity={dataAttr?.('imageLink')}
+        />
+      </div>
+    )}
+
+    <div class="grid gap-8 md:grid-cols-2">
+      <!-- Pricing -->
+      <div class="rounded-lg border border-white/10 bg-white/5 p-6">
+        <h2 class="mb-4 text-lg font-semibold">Pricing</h2>
+        {community.callForPrice ? (
+          <p class="text-2xl font-bold text-primary-400">Call for Price</p>
+        ) : (community.minPrice || community.maxPrice) ? (
+          <p class="text-2xl font-bold text-primary-400" data-sanity={dataAttr?.('minPrice')}>
+            {community.minPrice && community.maxPrice
+              ? `${formatPrice(community.minPrice)} - ${formatPrice(community.maxPrice)}`
+              : community.minPrice
+              ? `From ${formatPrice(community.minPrice)}`
+              : `Up to ${formatPrice(community.maxPrice!)}`
+            }
+          </p>
+        ) : (
+          <p class="text-secondary">Pricing not available</p>
+        )}
+        
+      </div>
+
+      <!-- Details -->
+      <div class="rounded-lg border border-white/10 bg-white/5 p-6">
+        <h2 class="mb-4 text-lg font-semibold">Details</h2>
+        <dl class="grid grid-cols-2 gap-3 text-sm">
+          {community.brand && (
+            <>
+              <dt class="text-secondary">Brand</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('brand')}>{community.brand}</dd>
+            </>
+          )}
+          {community.propertyType && (
+            <>
+              <dt class="text-secondary">Property Type</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('propertyType')}>{community.propertyType}</dd>
+            </>
+          )}
+          {(community.minBeds || community.maxBeds) && (
+            <>
+              <dt class="text-secondary">Bedrooms</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('minBeds')}>
+                {community.minBeds === community.maxBeds
+                  ? community.minBeds
+                  : `${community.minBeds} - ${community.maxBeds}`
+                }
+              </dd>
+            </>
+          )}
+          {(community.minBaths || community.maxBaths) && (
+            <>
+              <dt class="text-secondary">Bathrooms</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('minBaths')}>
+                {community.minBaths === community.maxBaths
+                  ? community.minBaths
+                  : `${community.minBaths} - ${community.maxBaths}`
+                }
+              </dd>
+            </>
+          )}
+          {(community.minCars || community.maxCars) && (
+            <>
+              <dt class="text-secondary">Garage</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('minCars')}>
+                {community.minCars === community.maxCars
+                  ? `${community.minCars} car`
+                  : `${community.minCars} - ${community.maxCars} car`
+                }
+              </dd>
+            </>
+          )}
+          {(community.minStories || community.maxStories) && (
+            <>
+              <dt class="text-secondary">Stories</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('minStories')}>
+                {community.minStories === community.maxStories
+                  ? community.minStories
+                  : `${community.minStories} - ${community.maxStories}`
+                }
+              </dd>
+            </>
+          )}
+          {(community.minSqft || community.maxSqft) && (
+            <>
+              <dt class="text-secondary">Square Feet</dt>
+              <dd class="font-medium" data-sanity={dataAttr?.('minSqft')}>
+                {community.minSqft === community.maxSqft
+                  ? `${community.minSqft?.toLocaleString()}`
+                  : `${community.minSqft?.toLocaleString()} - ${community.maxSqft?.toLocaleString()}`
+                }
+              </dd>
+            </>
+          )}
+        </dl>
+      </div>
+    </div>
+
+    {houses.length > 0 && (
+      <div class="mt-8">
+        <h2 class="mb-6 text-xl font-semibold">Available Homes ({houses.length})</h2>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {houses.map((house: SanityHouse) => (
+            <a 
+              href={`/house/${house._id}`}
+              class="group rounded-lg border border-white/10 bg-white/5 overflow-hidden transition-all hover:border-primary-400/50 hover:bg-white/10"
+            >
+              {house.imageLink ? (
+                <div class="aspect-video overflow-hidden">
+                  <img 
+                    src={house.imageLink} 
+                    alt={house.address}
+                    class="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div class="aspect-video bg-white/5 flex items-center justify-center">
+                  <span class="text-secondary text-sm">No image</span>
+                </div>
+              )}
+              <div class="p-4">
+                <div class="flex items-start justify-between gap-2">
+                  <h3 class="font-semibold text-sm leading-tight group-hover:text-primary-400 transition-colors">
+                    {house.address}
+                  </h3>
+                  {house.status && (
+                    <span class={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      house.status === 'Available' || house.status === 'Quick Move-In'
+                        ? 'bg-green-500/20 text-green-400'
+                        : house.status === 'Under Construction'
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {house.status}
+                    </span>
+                  )}
+                </div>
+                
+                {house.price && (
+                  <p class="mt-2 text-lg font-bold text-primary-400">
+                    {formatPrice(house.price)}
+                  </p>
+                )}
+                
+                {(house.beds || house.baths || house.sqft) && (
+                  <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-secondary">
+                    {house.beds && <span>{house.beds} bed{house.beds !== 1 ? 's' : ''}</span>}
+                    {house.baths && <span>{house.baths}{house.halfBaths ? `.${house.halfBaths}` : ''} bath{house.baths !== 1 ? 's' : ''}</span>}
+                    {house.sqft && <span>{house.sqft.toLocaleString()} sqft</span>}
+                  </div>
+                )}
+                
+                {house.floorPlanName && (
+                  <p class="mt-2 text-xs text-secondary">
+                    Plan: {house.floorPlanName}
+                  </p>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Amenities -->
+    {community.amenities && community.amenities.length > 0 && (
+      <div class="mt-8 rounded-lg border border-white/10 bg-white/5 p-6">
+        <h2 class="mb-4 text-lg font-semibold">Amenities</h2>
+        <div class="flex flex-wrap gap-2">
+          {community.amenities.map((amenity) => (
+            <span class="rounded-full bg-primary-500 px-3 py-1 text-sm text-white">
+              {amenity}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+  </div>
+</BaseLayout>

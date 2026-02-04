@@ -1,0 +1,276 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getHouseById, getAllHouseIds, type SanityHouse } from '../../lib/sanity';
+import { formatPrice } from '../../lib/utils';
+
+// Helper to create URL-friendly slug from state name
+function toSlug(name: string): string {
+  const cleaned = name.replace(/[\u200B-\u200D\u200C\uFEFF]/g, '');
+  return cleaned.toLowerCase().replace(/\s+/g, '-');
+}
+
+// Format date
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+export const getStaticPaths = (async () => {
+  const ids = await getAllHouseIds();
+  return ids.map((id) => ({
+    params: { house: id },
+  }));
+}) satisfies GetStaticPaths;
+
+const { house } = Astro.params;
+const houseData = await getHouseById(house);
+
+if (!houseData) {
+  return Astro.redirect('/404');
+}
+---
+
+<BaseLayout 
+  title={houseData.address} 
+  description={`${houseData.address} - ${houseData.floorPlanName || 'Home for Sale'}`}
+  preloadImage={houseData.imageLink}
+>
+  <div class="mx-auto max-w-4xl px-4 py-12">
+    <!-- Breadcrumb -->
+    <header class="mb-8">
+      <nav class="mb-4 text-sm text-secondary">
+        <a href="/states" class="hover:text-primary-400 transition-colors">States</a>
+        {houseData.community?.state && (
+          <>
+            <span class="mx-2">/</span>
+            <a 
+              href={`/states/${toSlug(houseData.community.state.name)}`} 
+              class="hover:text-primary-400 transition-colors"
+            >
+              {houseData.community.state.name}
+            </a>
+          </>
+        )}
+        {houseData.community && (
+          <>
+            <span class="mx-2">/</span>
+            <a 
+              href={`/communities/${houseData.community._id}`} 
+              class="hover:text-primary-400 transition-colors"
+            >
+              {houseData.community.name}
+            </a>
+          </>
+        )}
+        <span class="mx-2">/</span>
+        <span>{houseData.address}</span>
+      </nav>
+
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold md:text-4xl">{houseData.address}</h1>
+          {houseData.community && (
+            <p class="mt-2 text-lg text-secondary">
+              {houseData.community.name}
+              {houseData.lot && <span> &bull; Lot {houseData.lot}</span>}
+            </p>
+          )}
+        </div>
+
+        {houseData.status && (
+          <span 
+            class={`rounded-full px-3 py-1 text-sm font-medium ${
+              houseData.status === 'Available' || houseData.status === 'Quick Move-In'
+                ? 'bg-green-500/20 text-green-400'
+                : houseData.status === 'Under Construction'
+                ? 'bg-yellow-500/20 text-yellow-400'
+                : houseData.status === 'Model Home'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-gray-500/20 text-gray-400'
+            }`}
+          >
+            {houseData.status}
+          </span>
+        )}
+      </div>
+    </header>
+
+    <!-- Main Image -->
+    {houseData.imageLink && (
+      <div class="mb-8 overflow-hidden rounded-lg">
+        <img
+          src={houseData.imageLink}
+          alt={houseData.address}
+          class="w-full object-cover"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    )}
+
+    <!-- Price & Move-in Info -->
+    <div class="mb-8 rounded-lg border border-white/10 bg-white/5 p-6">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          {houseData.price ? (
+            <p class="text-3xl font-bold text-primary-400">{formatPrice(houseData.price)}</p>
+          ) : (
+            <p class="text-2xl font-bold text-secondary">Call for Price</p>
+          )}
+        </div>
+        
+        <div class="text-right">
+          {houseData.moveInStatus && (
+            <p class="text-sm text-secondary">{houseData.moveInStatus}</p>
+          )}
+          {houseData.moveInDate && (
+            <p class="font-medium">Move-in: {formatDate(houseData.moveInDate)}</p>
+          )}
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Specs Grid -->
+    <div class="mb-8 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+      {houseData.beds && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.beds}</p>
+          <p class="text-sm text-secondary">Beds</p>
+        </div>
+      )}
+      {houseData.baths && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.baths}{houseData.halfBaths ? `.${houseData.halfBaths}` : ''}</p>
+          <p class="text-sm text-secondary">Baths</p>
+        </div>
+      )}
+      {houseData.sqft && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.sqft.toLocaleString()}</p>
+          <p class="text-sm text-secondary">Sq Ft</p>
+        </div>
+      )}
+      {houseData.stories && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.stories}</p>
+          <p class="text-sm text-secondary">Stories</p>
+        </div>
+      )}
+      {houseData.garage && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.garage}</p>
+          <p class="text-sm text-secondary">Car Garage</p>
+        </div>
+      )}
+      {houseData.lot && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+          <p class="text-2xl font-bold">{houseData.lot}</p>
+          <p class="text-sm text-secondary">Lot</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Details -->
+    <div class="grid gap-8 md:grid-cols-2">
+      <!-- Home Details -->
+      <div class="rounded-lg border border-white/10 bg-white/5 p-6">
+        <h2 class="mb-4 text-lg font-semibold">Home Details</h2>
+        <dl class="grid grid-cols-2 gap-3 text-sm">
+          {houseData.floorPlanName && (
+            <>
+              <dt class="text-secondary">Floor Plan</dt>
+              <dd class="font-medium">{houseData.floorPlanName}</dd>
+            </>
+          )}
+          {houseData.brand && (
+            <>
+              <dt class="text-secondary">Builder</dt>
+              <dd class="font-medium">{houseData.brand}</dd>
+            </>
+          )}
+          {houseData.community && (
+            <>
+              <dt class="text-secondary">Community</dt>
+              <dd class="font-medium">
+                <a href={`/communities/${houseData.community._id}`} class="text-primary-400 hover:underline">
+                  {houseData.community.name}
+                </a>
+              </dd>
+            </>
+          )}
+          {houseData.status && (
+            <>
+              <dt class="text-secondary">Status</dt>
+              <dd class="font-medium">{houseData.status}</dd>
+            </>
+          )}
+        </dl>
+      </div>
+
+      <!-- Floor Plan Link -->
+      {houseData.floorPlan && (
+        <div class="rounded-lg border border-white/10 bg-white/5 p-6">
+          <h2 class="mb-4 text-lg font-semibold">Floor Plan</h2>
+          <a href={`/floor-plans/${houseData.floorPlan.slug?.current || houseData.floorPlan._id}`} class="block group">
+            {houseData.floorPlan.imageLink && (
+              <div class="mb-4 overflow-hidden rounded-lg">
+                <img 
+                  src={houseData.floorPlan.imageLink} 
+                  alt={houseData.floorPlan.name}
+                  class="w-full object-cover transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+            )}
+            <p class="font-semibold text-primary-400 group-hover:underline">{houseData.floorPlan.name}</p>
+            {(houseData.floorPlan.beds || houseData.floorPlan.baths || houseData.floorPlan.sqft) && (
+              <p class="mt-1 text-sm text-secondary">
+                {[
+                  houseData.floorPlan.beds && `${houseData.floorPlan.beds} beds`,
+                  houseData.floorPlan.baths && `${houseData.floorPlan.baths} baths`,
+                  houseData.floorPlan.sqft && `${houseData.floorPlan.sqft.toLocaleString()} sqft`,
+                ].filter(Boolean).join(' • ')}
+              </p>
+            )}
+          </a>
+        </div>
+      )}
+    </div>
+
+    <!-- Features -->
+    {houseData.features && houseData.features.length > 0 && (
+      <div class="mt-8 rounded-lg border border-white/10 bg-white/5 p-6">
+        <h2 class="mb-4 text-lg font-semibold">Features & Upgrades</h2>
+        <div class="flex flex-wrap gap-2">
+          {houseData.features.map((feature) => (
+            <span class="rounded-full bg-primary-500/20 px-3 py-1 text-sm text-primary-400">
+              {feature}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Photo Gallery -->
+    {houseData.photos && houseData.photos.length > 0 && (
+      <div class="mt-8">
+        <h2 class="mb-4 text-lg font-semibold">Photos</h2>
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-3">
+          {houseData.photos.map((photo, index) => (
+            <div class="aspect-video overflow-hidden rounded-lg">
+              <img 
+                src={photo} 
+                alt={`${houseData.address} - Photo ${index + 1}`}
+                class="h-full w-full object-cover hover:scale-105 transition-transform"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+  </div>
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SearchInput } from '../components/SearchInput';
+import { getStates, getAreas, getAllCommunities, getAllHouses } from '../lib/sanity';
+
+// Fetch all data for search
+const [states, areas, communities, houses] = await Promise.all([
+  getStates(),
+  getAreas(),
+  getAllCommunities(),
+  getAllHouses(),
+]);
+---
+
+<BaseLayout title="Search" description="Search houses, communities, areas, and states">
+  <div class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="text-3xl font-bold">Search</h1>
+    <p class="mt-2 text-secondary">
+      Find houses, communities, areas, or states by name, location, or features
+    </p>
+
+    {/* 
+      Islands Architecture: SearchInput uses client:visible
+      - Hydrates when the search area scrolls into view
+      - Since users navigate here intentionally, visible is appropriate
+      - Reduces initial JS load compared to client:load
+      - Alternative: client:idle would also work well here
+    */}
+    <SearchInput 
+      client:visible 
+      states={states}
+      areas={areas}
+      communities={communities}
+      houses={houses}
+    />
+  </div>
+</BaseLayout>
