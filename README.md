@@ -2,19 +2,6 @@
 
 A comprehensive comparison of building identical sites with **Astro** and **Next.js**, demonstrating the strengths and trade-offs of each framework for content-focused websites.
 
-## Project Structure
-
-```
-next-astro-sanity/
-├── astro-demo/          # Astro implementation
-├── next-demo/           # Next.js implementation
-├── shared/
-│   └── content/         # Shared markdown content
-│       ├── posts/       # Blog posts (MDX)
-│       └── authors/     # Author data (JSON)
-└── README.md            # This file
-```
-
 ## Quick Start
 
 ### Environment files
