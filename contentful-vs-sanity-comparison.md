@@ -229,7 +229,7 @@ export default {
 **Documentation:**
 
 - Contentful: [Spaces & Organizations](https://www.contentful.com/help/spaces-and-organizations/) | [Organizations](https://www.contentful.com/help/organizations/)
-- Sanity: [Platform Terminology](https://www.sanity.io/docs/platform-terminology) | [Multi-tenancy Guide](https://www.sanity.io/docs/multi-tenancy-implementation)
+- Sanity: [Platform Terminology](https://www.sanity.io/docs/platform-terminology) | [Multi-tenancy Guide](https://www.sanity.io/docs/developer-guides/multi-tenancy-implementation#8cf8789484b2)
 
 ---
 
