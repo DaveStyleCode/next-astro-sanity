@@ -1,4 +1,4 @@
-# Next.js vs Astro: Framework Recommendation for D.R. Horton Website
+# Next.js vs Astro: Framework Recommendation
 
 > **Context:** Monorepo (`pnpm` + Turborepo) with Sanity CMS, React Native mobile app(s), page-builder architecture, and LaunchDarkly personalization.
 
