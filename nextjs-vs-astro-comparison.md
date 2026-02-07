@@ -1,8 +1,7 @@
 # Next.js vs Astro: Framework Recommendation for House Listing Website
 
-> **Date:** February 2026
 > **Versions evaluated:** Next.js 16 (stable 16.1), Astro 5 (stable)
-> **Context:** Evaluating frameworks for a house listing website within a monorepo (`pnpm` + Turborepo) that includes Sanity CMS, React Native mobile app(s), page-builder architecture, and LaunchDarkly personalization. A Next.js proof-of-concept exists but no production framework decision has been made.
+> **Context:** Evaluating frameworks for a house listing website within a monorepo (`pnpm` + Turborepo) that includes Sanity CMS, React Native mobile app(s), page-builder architecture, and LaunchDarkly personalization. Hosting will be on **Vercel**. A Next.js proof-of-concept exists but no production framework decision has been made.
 
 ---
 
@@ -37,7 +36,7 @@
 
 Both Next.js and Astro are capable frameworks, but they optimize for fundamentally different things. **Next.js optimizes for dynamic, app-like experiences** where React runs everywhere. **Astro optimizes for content-driven sites** where most pages are static and interactivity is the exception, not the rule.
 
-Given the project requirements — Sanity-driven page builder, LaunchDarkly personalization with full-route A/B variants, React Native mobile app(s) sharing logic, and the practical realities of hiring and ecosystem maturity — **Next.js is the stronger choice**, with the understanding that an Astro migration remains a viable (and relatively mechanical) option down the road if the site's needs shift more toward pure content delivery.
+Given the project requirements — Sanity-driven page builder, LaunchDarkly personalization with full-route A/B variants, React Native mobile app(s) sharing logic, Vercel hosting, and the practical realities of hiring and ecosystem maturity — **Next.js is the stronger choice**, with the understanding that an Astro migration remains a viable (and relatively mechanical) option down the road if the site's needs shift more toward pure content delivery.
 
 ---
 
@@ -301,7 +300,7 @@ Content editors publishing listing pages, community descriptions, and marketing 
 | **Feature parity off Vercel** | Most features work self-hosted, but with caveats. ISR requires a persistent cache store. `next/image` optimization requires a custom loader or running the built-in optimizer (which adds CPU load). Cache Components need a cache backend. The gap between Vercel-hosted and self-hosted Next.js is narrowing but still real.                                                                                    | Feature parity is consistent across hosts. What works on Netlify works on Cloudflare works on a VPS. Adapter differences are minor (edge vs. Node runtime capabilities).                                                   |
 | **Vendor switching cost**     | Moving a Next.js app off Vercel is possible but requires infrastructure work — setting up ISR caching, image optimization, middleware runtime, etc. Moving _to_ another framework's host is a larger effort.                                                                                                                                                                                                      | Switching hosts is typically a one-line adapter change (`@astrojs/vercel` → `@astrojs/cloudflare`). Low switching cost by design.                                                                                          |
 
-**Verdict: Astro wins on hosting flexibility; Next.js wins on zero-config deployment.** If you deploy to Vercel and stay there, Next.js's integration is unbeatable — everything just works. If avoiding vendor lock-in is a strategic concern, Astro's multi-host portability is genuinely superior. Next.js 16's Build Adapters API is an acknowledgment of this gap, but the self-hosting story still requires more operational investment than Astro's. **This should be an explicit decision: if the team commits to Vercel, the lock-in concern is moot and Next.js benefits fully. If Vercel lock-in is unacceptable, factor this into the overall assessment.**
+**Verdict: Next.js wins — Vercel is confirmed.** With Vercel as the hosting platform, every Next.js feature (ISR, image optimization, Cache Components, middleware, edge functions, analytics) works out of the box with zero configuration. The vendor lock-in concern is accepted, and Next.js's first-party Vercel integration becomes a pure advantage rather than a trade-off. Astro's multi-host portability is a moot point for this project.
 
 ---
 
@@ -396,7 +395,7 @@ The reverse migration (Astro → Next.js) would be similarly possible, but `.ast
 | Image Optimization                | 5%     | 8/10    | 7/10  | `next/image` DX wins; both use Sanity's image CDN in practice                                                        |
 | SEO & Metadata                    | 3%     | 8/10    | 7/10  | `generateMetadata` + `next/og` are conveniences; neither framework is a blocker                                      |
 | Content Editor Preview            | 5%     | 9/10    | 6/10  | Sanity Presentation tool, `useLiveQuery`, visual editing overlays are built for Next.js                              |
-| Hosting & Vendor Lock-In          | 5%     | 7/10    | 9/10  | Astro's multi-host portability is superior; Next.js is best on Vercel                                                |
+| Hosting & Vendor Lock-In          | 5%     | 10/10   | 9/10  | Vercel confirmed — Next.js's first-party integration is a pure advantage                                             |
 | SSR Infrastructure Cost           | 4%     | 7/10    | 9/10  | Server Islands' granular SSR scope is structurally cheaper at scale                                                  |
 | Learning Curve & Hiring           | 12%    | 9/10    | 6/10  | Market share, hiring pool, integration knowledge availability; Astro ramp-up is modest but ecosystem support is thin |
 | Ecosystem & Community             | 8%     | 9/10    | 7/10  | Enterprise depth, third-party SDKs, community size                                                                   |
@@ -407,10 +406,10 @@ The reverse migration (Astro → Next.js) would be similarly possible, but `.ast
 
 ### Weighted Scores
 
-- **Next.js: 8.43 / 10**
+- **Next.js: 8.58 / 10**
 - **Astro: 6.93 / 10**
 
-> **Weight justification:** Hiring/talent and A/B testing carry the highest weights (12% each) because they have the most compounding impact on a production project — hiring affects every sprint, and A/B testing is a core product requirement that touches architecture daily. Build times are low (5%) because ISR makes cold builds infrequent for content updates. Hosting lock-in and SSR cost are weighted modestly (5% and 4%) because they're real concerns but manageable with architecture decisions. Internationalization is excluded until scope is confirmed — adding it at 5% would widen the gap slightly in Next.js's favor.
+> **Weight justification:** Hiring/talent and A/B testing carry the highest weights (12% each) because they have the most compounding impact on a production project — hiring affects every sprint, and A/B testing is a core product requirement that touches architecture daily. Build times are low (5%) because ISR makes cold builds infrequent for content updates. Hosting is weighted at 5% and is now a confirmed Next.js advantage with Vercel as the deployment target. SSR cost is weighted modestly (4%) because it's manageable with architecture decisions. Internationalization is excluded until scope is confirmed — adding it at 5% would widen the gap slightly in Next.js's favor.
 
 ---
 
@@ -426,10 +425,6 @@ The decision is driven by three reinforcing factors:
 
 3. **React Native code sharing is a force multiplier — at the data layer.** The monorepo includes a mobile app, with the possibility of more. While UI component sharing between web and native is limited in practice (different layout paradigms), a React-everywhere strategy means TypeScript types, Sanity queries, hooks, validation logic, and business logic are shared assets. With Astro, the web's rendering layer becomes a silo — interactive components are React islands anyway, but you lose the unified component model and the ability to share patterns between web and mobile rendering code.
 
-### Prerequisite Decision: Hosting Strategy
-
-Before committing to Next.js, explicitly decide on hosting. Next.js's scorecard advantage assumes deployment to **Vercel**, where every feature (ISR, image optimization, Cache Components, middleware, edge functions) works with zero configuration. If the project has constraints that preclude Vercel — budget, compliance, multi-cloud requirements — factor in the additional operational cost of self-hosting Next.js (cache backends, image optimization infrastructure, adapter configuration). Astro's multi-host portability would carry more weight in that scenario.
-
 ### When Astro Would Be the Better Choice
 
 Astro would be the right call if:
@@ -440,7 +435,6 @@ Astro would be the right call if:
 - Build performance for thousands of static pages were the primary bottleneck
 - The team wanted to minimize client-side JavaScript at all costs
 - The caching story needed to be maximally simple: Astro's Server Islands have a clean, intuitive cache model (static HTML + deferred islands) with less API surface than Next.js's `use cache` / `cacheLife` / `cacheTag` system
-- **Avoiding vendor lock-in were a hard requirement** — Astro's multi-host portability (Vercel, Cloudflare, Netlify, AWS, Deno) is superior to Next.js's Vercel-optimized model
 - **SSR infrastructure cost were the primary constraint** — Server Islands' granular rendering scope (only the dynamic island hits the server) is structurally cheaper than full-page SSR at high traffic volumes
 
 ### The Escape Hatch
