@@ -94,7 +94,7 @@ Key patterns already in place:
 | **JS payload (static pages)** | Ships the React runtime (~80-100 KB gzipped) even for mostly static pages. Partial Prerendering (PPR) in Next.js 15 mitigates this by streaming static shells. | Ships zero JS by default. Only islands that need interactivity get hydrated. A content-heavy page can be ~0 KB JS. |
 | **Core Web Vitals** | Good with effort. Requires attention to bundle size, font loading, image optimization (`next/image`), and avoiding hydration jank. | Excellent out of the box for content pages. Near-perfect Lighthouse scores are the norm for static Astro sites. |
 
-**Verdict: Astro wins on raw static performance.** For a content-heavy homebuilder site, the zero-JS default is compelling. However, Next.js 15's Partial Prerendering narrows this gap significantly, and the personalization requirements (see below) mean many pages won't be purely static anyway.
+**Verdict: Astro wins on raw static performance.** For a content-heavy site, the zero-JS default is compelling. However, Next.js 15's Partial Prerendering narrows this gap significantly, and the personalization requirements (see below) mean many pages won't be purely static anyway.
 
 ---
 
@@ -132,11 +132,11 @@ This is one of the most consequential factors.
 | | Next.js | Astro |
 |---|---|---|
 | **Default** | Everything is React. Client Components hydrate on the client; Server Components render on the server. You choose per-component. | Everything is static HTML. You opt into interactivity per-component via `client:*` directives (islands). |
-| **Interactive features needed** | Mortgage calculators, community search/filter, map integrations, form wizards, image galleries, tab navigation — a homebuilder site has significant interactivity. | Each of these would be a React island. The plumbing for each island is manageable but adds architectural overhead. |
+| **Interactive features needed** | Mortgage calculators, community search/filter, map integrations, form wizards, image galleries, tab navigation — a home listing site has significant interactivity. | Each of these would be a React island. The plumbing for each island is manageable but adds architectural overhead. |
 | **State sharing** | React context, Zustand, or any state library works across the whole page. | State doesn't naturally flow between islands. You'd use `nanostores`, custom events, or URL state. |
 | **Forms** | React Hook Form, server actions, or any React form library. Progressive enhancement with `useFormStatus`. | Forms in `.astro` files work with standard HTML. Interactive forms need a React island. |
 
-**Verdict: Next.js wins for this use case.** A homebuilder site is not a blog. Community search, mortgage tools, interactive maps, and personalized experiences mean a meaningful portion of pages need interactivity. Astro's island model works, but you'd be writing React components inside Astro islands — adding a layer of indirection without clear benefit.
+**Verdict: Next.js wins for this use case.** A home listing site is not a blog. Community search, mortgage tools, interactive maps, and personalized experiences mean a meaningful portion of pages need interactivity. Astro's island model works, but you'd be writing React components inside Astro islands — adding a layer of indirection without clear benefit.
 
 ---
 
@@ -211,7 +211,7 @@ The reverse migration (Astro → Next.js) would be similarly possible, but `.ast
 | Performance (SSG/SSR) | 10% | 7/10 | 9/10 | Astro's zero-JS default is hard to beat |
 | LaunchDarkly Personalization | 15% | 9/10 | 6/10 | Server-side is equal; client-side React is superior |
 | Build Times | 5% | 7/10 | 9/10 | ISR offsets Astro's faster cold builds |
-| Interactivity | 10% | 9/10 | 6/10 | Homebuilder site needs significant interactivity |
+| Interactivity | 10% | 9/10 | 6/10 | Home listing site needs significant interactivity |
 | Route-Level A/B Testing | 15% | 9/10 | 6/10 | Existing schema assumes React rendering model |
 | Learning Curve | 5% | 9/10 | 6/10 | Team is already in Next.js |
 | Ecosystem & Community | 5% | 9/10 | 7/10 | Enterprise depth, hiring, third-party SDKs |
