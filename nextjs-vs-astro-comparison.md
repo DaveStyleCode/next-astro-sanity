@@ -29,14 +29,13 @@
 
 Both Next.js and Astro are capable frameworks, but they optimize for fundamentally different things. **Next.js optimizes for dynamic, app-like experiences** where React runs everywhere. **Astro optimizes for content-heavy sites** where most pages are static and interactivity is the exception, not the rule.
 
-Given the D.R. Horton requirements — Sanity-driven page builder, LaunchDarkly personalization with full-route A/B variants, a React Native mobile app sharing logic, and a team already invested in React — **Next.js is the stronger choice for the initial build**, with the understanding that an Astro migration remains a viable (and relatively mechanical) option down the road if the site's needs shift more toward pure content delivery.
+Given the requirements — Sanity-driven page builder, LaunchDarkly personalization with full-route A/B variants, a React Native mobile app sharing logic, and a team already invested in React — **Next.js is the stronger choice for the initial build**, with the understanding that an Astro migration remains a viable (and relatively mechanical) option down the road if the site's needs shift more toward pure content delivery.
 
 ---
 
 ## Current Architecture Snapshot
 
 ```
-drhorton-next/
 ├── apps/
 │   ├── website/            ← Next.js 15, React 18, Tailwind, @sanity/client
 │   ├── mobile/             ← React Native (Expo), shares Sanity client
@@ -264,7 +263,6 @@ This phased approach lets you start fast with Next.js today while keeping the do
 ### What a Next.js → Astro migration looks like in this monorepo
 
 ```
-drhorton/
 ├── apps/
 │   ├── website/          ← Keep as Next.js for dynamic/personalized routes
 │   ├── marketing/        ← NEW: Astro for static content pages
