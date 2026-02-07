@@ -1,4 +1,4 @@
-# Next.js vs Astro: Framework Recommendation for House Listing Website
+# Next.js vs Astro: Framework Recommendation
 
 > **Versions evaluated:** Next.js 16 (stable 16.1), Astro 5 (stable)
 > **Context:** Evaluating frameworks for a house listing website within a [monorepo](https://github.com/DaveStyleCode/horton-monorepo) (`pnpm` + Turborepo) that includes Sanity CMS, React Native mobile app(s), page-builder architecture, and LaunchDarkly personalization. Hosting will be on **Vercel**. A Next.js proof-of-concept exists but no production framework decision has been made.
