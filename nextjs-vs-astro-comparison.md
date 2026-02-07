@@ -213,7 +213,7 @@ The reverse migration (Astro → Next.js) would be similarly possible, but `.ast
 | Build Times | 5% | 7/10 | 9/10 | ISR offsets Astro's faster cold builds |
 | Interactivity | 10% | 9/10 | 6/10 | Home listing site needs significant interactivity |
 | Route-Level A/B Testing | 15% | 9/10 | 6/10 | Existing schema assumes React rendering model |
-| Learning Curve | 5% | 9/10 | 6/10 | Team is already in Next.js |
+| Learning Curve | 5% | 9/10 | 6/10 | Team and future hires lean toward Next.js and React |
 | Ecosystem & Community | 5% | 9/10 | 7/10 | Enterprise depth, hiring, third-party SDKs |
 | Future Migration Path | 5% | 8/10 | 7/10 | Next → Astro is easier than Astro → Next |
 
