@@ -1,5 +1,6 @@
 # Next.js vs Astro: Framework Recommendation for House Listing Website
 
+> **Date:** February 2026
 > **Versions evaluated:** Next.js 16 (stable 16.1), Astro 5 (stable)
 > **Context:** Evaluating frameworks for a house listing website within a monorepo (`pnpm` + Turborepo) that includes Sanity CMS, React Native mobile app(s), page-builder architecture, and LaunchDarkly personalization. A Next.js proof-of-concept exists but no production framework decision has been made.
 
@@ -215,6 +216,30 @@ For **full-page server-side A/B testing**, both frameworks now have stable solut
 For **element-level flags**, Next.js is meaningfully simpler. When you need 5 different elements on a page each controlled by their own flag — some server-resolved, some client-reactive — React's unified component tree with shared LD context handles this naturally. In Astro, each flagged element needs its own island or needs to be composed into a larger island, and client-side flag state doesn't flow between islands without extra wiring.
 
 For **client-side variant switching** (flag changes mid-session without a reload), Next.js wins outright. Server Islands can't re-render without a page navigation.
+
+#### Next.js Full-Route A/B Testing Pattern
+
+For full-route A/B tests where the entire page composition changes based on a LaunchDarkly flag, Next.js provides a clean server-side pattern using `getServerSideProps`. The flag is resolved on the server before any rendering, so the user receives the correct variant with zero client-side flicker:
+
+```js
+// pages/landing-page.js
+import { withLDServerSideProps } from 'launchdarkly-react-client-sdk/server';
+
+export const getServerSideProps = withLDServerSideProps({
+  // Your LaunchDarkly environment details
+});
+
+const LandingPage = ({ flags }) => {
+  if (flags.landingPageRework === 'variant') {
+    return <VariantLandingPage />;
+  }
+  return <ControlLandingPage />;
+};
+
+export default LandingPage;
+```
+
+This pattern evaluates the flag on the server during `getServerSideProps`, passes the resolved flags as props, and renders the appropriate full-page variant — all in a single server round-trip. The URL stays the same regardless of variant, making it transparent to the user and compatible with analytics tracking. For the App Router equivalent, the same logic moves into a Server Component with the LaunchDarkly Node SDK evaluated directly in the component body.
 
 **Verdict: Slight Next.js advantage overall.** Full-page server-side A/B testing is close to a draw (Astro may even be better). But the combination of element-level flags + client-side reactivity + shared flag context tips the balance toward Next.js. The real question is how much of your A/B testing is server-side full-page vs. client-side element-level — the more it skews toward the latter, the stronger the Next.js case.
 
